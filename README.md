@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Next.js & HeroUI Template
 
 This is a template for creating applications using Next.js 14 (app directory) and HeroUI (v2).
@@ -87,3 +88,7 @@ VALUES ('admin@example.com', '<paste_bcrypt_hash_here>', 'Admin', 'admin');
 ```
 
 After setting env vars and creating a user, run the dev server and log in via `/admin/login`.
+=======
+# PAIN-BOUL
+creation d'un site vitrine
+>>>>>>> 6a985ac745836d2620aaa5c9ba7ef20e8041b6a6
