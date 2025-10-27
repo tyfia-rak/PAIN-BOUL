@@ -5,10 +5,11 @@ import { DashboardProps } from "../../types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
+import { BACKEND_URL } from '@/lib/config'
 
 import ProductsSection from "./sections/ProductsSection";
-import CommandesSection from "./sections/CommandesSection";
 import CategoriesSection from "./sections/CategoriesSection";
+import CommandesSection from "./sections/CommandesSection";
 
 function Dashboard({ session }: DashboardProps) {
     const [activeSection, setActiveSection] = useState<string>("Dashboard");
@@ -32,7 +33,7 @@ function Dashboard({ session }: DashboardProps) {
         if (!result.isConfirmed) return;
 
         try {
-            const response = await fetch('http://localhost:8080/users/logout', {
+            const response = await fetch(`${BACKEND_URL}/users/logout`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ProductFormModal from "../components/ProductFormModal";
+import { BACKEND_URL } from '@/lib/config'
 import Swal from 'sweetalert2';
 
 interface Product {
@@ -11,8 +12,6 @@ interface Product {
     image: string;
     categoryName: string;
 }
-
-const BACKEND_URL = "http://localhost:8080";
 
 export default function ProductsSection({ query }: { query: string }) {
     const [products, setProducts] = useState<Product[]>([]);

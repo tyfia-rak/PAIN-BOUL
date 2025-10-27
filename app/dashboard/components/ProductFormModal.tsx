@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from "react";
+import { BACKEND_URL } from '@/lib/config'
 import Swal from 'sweetalert2';
 
 interface Category {
@@ -21,8 +22,6 @@ interface ProductFormModalProps {
     onClose: () => void;
     onSaved: () => void;
 }
-
-const BACKEND_URL = "http://localhost:8080";
 
 export default function ProductFormModal({ product, onClose, onSaved }: ProductFormModalProps) {
     const [form, setForm] = useState({

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from "react";
+import { BACKEND_URL } from '@/lib/config'
 import Swal from 'sweetalert2';
 
 interface Category {
@@ -27,8 +28,8 @@ export default function CategoryFormModal({ category, onClose, onSaved }: Catego
 
         const method = category ? "PUT" : "POST";
         const url = category
-            ? `http://localhost:8080/categories/${category.idCategory}`
-            : "http://localhost:8080/categories";
+            ? `${BACKEND_URL}/categories/${category.idCategory}`
+            : `${BACKEND_URL}/categories`;
 
         try {
             const res = await fetch(url, {

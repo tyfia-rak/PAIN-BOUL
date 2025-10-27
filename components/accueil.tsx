@@ -26,9 +26,9 @@ export const Accueil = () => {
             Boulangerie Artisanale
           </p>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl font-inter font-light leading-relaxed">
-            Depuis 2016, nous perpétuons la tradition boulangère Malgache avec passion. 
+            Depuis 2018, nous perpétuons la tradition boulangère Malgache avec passion. 
             Découvrez nos pains artisanaux, viennoiseries et pâtisseries préparés quotidiennement 
-            avec des ingrédients d'exception.
+            avec des ingrédients locaux.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react";
+import { BACKEND_URL } from '@/lib/config'
 import CategoryFormModal from "../components/CategoryFormModal";
 import Swal from 'sweetalert2';
 
@@ -25,7 +26,7 @@ export default function CategoriesSection({ query = "" }: CategoriesSectionProps
 
     const fetchCategories = async () => {
         try {
-            const res = await fetch("http://localhost:8080/categories");
+            const res = await fetch(`${BACKEND_URL}/categories`);
             if (!res.ok) throw new Error("Erreur lors du chargement des catégories");
             const data = await res.json();
             setCategories(data);
@@ -57,7 +58,7 @@ export default function CategoriesSection({ query = "" }: CategoriesSectionProps
         if (!result.isConfirmed) return;
 
         try {
-            const res = await fetch(`http://localhost:8080/categories/${id}`, { method: "DELETE" });
+            const res = await fetch(`${BACKEND_URL}/categories/${id}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Erreur lors de la suppression");
             setCategories(categories.filter((c) => c.idCategory !== id));
             
@@ -78,8 +79,7 @@ export default function CategoriesSection({ query = "" }: CategoriesSectionProps
             });
         }
     };
-
-    // Filtrer les catégories basé sur la query
+    
     const filtered = categories.filter((category) =>
         category.nameCategory.toLowerCase().includes(query.toLowerCase()) ||
         category.idCategory.toString().includes(query)
