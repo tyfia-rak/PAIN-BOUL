@@ -1,34 +1,34 @@
-'use client'
+'use client';
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@heroui/react';
-import { signIn } from 'next-auth/react'
+import { signIn } from 'next-auth/react';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-      })
+      });
       if (result?.ok) {
-        router.push('/dashboard')
+        router.push('/dashboard');
       } else {
-        console.error(result?.error || 'Echec de connexion')
-        setIsLoading(false)
+        console.error(result?.error || 'Echec de connexion');
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
       setIsLoading(false);
     }
   };
@@ -41,13 +41,14 @@ export default function Login() {
             <h1 className="font-playfair text-4xl font-bold text-foreground mb-2">
               Pain Boul
             </h1>
-            <p className="text-muted-foreground font-inter">
-              Administration
-            </p>
+            <p className="text-muted-foreground font-inter">Administration</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2 font-inter" htmlFor="email">
+              <label
+                className="block text-sm font-medium text-foreground mb-2 font-inter"
+                htmlFor="email"
+              >
                 Email
               </label>
               <input
@@ -60,9 +61,12 @@ export default function Login() {
                 placeholder="ex: admin@exemple.com"
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2 font-inter" htmlFor="password">
+              <label
+                className="block text-sm font-medium text-foreground mb-2 font-inter"
+                htmlFor="password"
+              >
                 Mot de passe
               </label>
               <input
@@ -76,15 +80,15 @@ export default function Login() {
               />
             </div>
 
-            <Button 
+            <Button
               type="submit"
-              size="lg" 
+              size="lg"
               className="w-full gradient-golden text-charcoal font-semibold text-lg py-3 shadow-golden font-inter"
               radius="sm"
               isLoading={isLoading}
               disabled={isLoading}
             >
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
 

@@ -1,4 +1,6 @@
-export function title(...additionalClasses: Array<string | false | undefined | null>): string {
+export function title(
+  ...additionalClasses: Array<string | false | undefined | null>
+): string {
   const baseClasses = [
     'text-4xl',
     'md:text-5xl',
@@ -10,5 +12,3 @@ export function title(...additionalClasses: Array<string | false | undefined | n
   const extra = additionalClasses.filter(Boolean) as string[];
   return [...baseClasses, ...extra].join(' ');
 }
-
-

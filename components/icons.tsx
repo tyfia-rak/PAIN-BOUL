@@ -1,7 +1,7 @@
-import * as React from "react";
+import * as React from 'react';
 
-import { IconSvgProps } from "@/types";
-import Image from "next/image";
+import { IconSvgProps } from '@/types';
+import Image from 'next/image';
 
 export const Logo: React.FC<IconSvgProps> = ({
   size = 36,
@@ -9,5 +9,5 @@ export const Logo: React.FC<IconSvgProps> = ({
   height,
   ...props
 }) => (
-      <Image src="/pain-boul.jpg" alt="Pain Boulangerie" width={100} height={30}/>
+  <Image src="/pain-boul.jpg" alt="Pain Boulangerie" width={100} height={30} />
 );

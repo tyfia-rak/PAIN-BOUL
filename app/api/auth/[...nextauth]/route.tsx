@@ -1,23 +1,27 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
 
-const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL || "http://localhost:8080";
+const BACKEND_BASE_URL =
+  process.env.BACKEND_BASE_URL || 'http://localhost:8080';
 
 export const authOptions = {
   providers: [
     Credentials({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/users/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
           });
           if (!res.ok) return null;
           const user = await res.json();
@@ -34,7 +38,7 @@ export const authOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: 'jwt' },
   callbacks: {
     async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
@@ -50,11 +54,9 @@ export const authOptions = {
     },
   },
   pages: {
-    signIn: "/admin/login",
+    signIn: '/admin/login',
   },
 } as any;
 
 const handler = NextAuth(authOptions as any);
 export { handler as GET, handler as POST };
-
-

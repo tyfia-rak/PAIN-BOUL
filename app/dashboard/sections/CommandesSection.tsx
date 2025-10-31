@@ -1,570 +1,401 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState } from 'react'
-import { BACKEND_URL } from '@/lib/config'
-import Swal from 'sweetalert2'
+import { useEffect, useState } from 'react';
+import { BACKEND_URL } from '@/lib/config';
+import Swal from 'sweetalert2';
 
-const STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
-  CONFIRMED: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800' },
-  PREPARING: { label: 'En préparation', color: 'bg-purple-100 text-purple-800' },
-  READY: { label: 'Prête', color: 'bg-green-100 text-green-800' },
-  DELIVERED: { label: 'Livrée', color: 'bg-gray-100 text-gray-800' },
-  CANCELLED: { label: 'Annulée', color: 'bg-red-100 text-red-800' }
+interface Order {
+  idOrder: number;
+  customerId: number;
+  items: Array<{
+    productId: number;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  orderDate: string;
+  status: string;
+  totalAmount: number;
 }
 
-interface DisplayOrderItem {
-  id: number
-  name: string
-  price: number
-  quantity: number
+interface Customer {
+  idCustomer: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 }
 
-interface DisplayOrder {
-  id: number
-  customerId?: number
-  productIds: number[]
-  orderDate?: string
-  status: string
-  totalAmount: number
-  createdAt?: string
-  customerName?: string
-  customerEmail?: string
-  customerPhone?: string
-  items: DisplayOrderItem[]
-}
+export default function CommandesSection() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<{ [key: number]: Customer }>({});
+  const [loading, setLoading] = useState(true);
 
-export default function CommandesSection({ query }: { query: string }) {
-  const [orders, setOrders] = useState<DisplayOrder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedOrder, setSelectedOrder] = useState<DisplayOrder | null>(null)
-  const [filterStatus, setFilterStatus] = useState<'ALL' | string>('ALL')
-  const [actionLoading, setActionLoading] = useState<number | null>(null)
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const fetchOrders = async () => {
     try {
-      setLoading(true)
-      console.log('🔄 Starting to fetch orders...')
-      
-      const res = await fetch('/api/orders', {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      console.log('📥 Orders fetch response status:', res.status)
-      
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('❌ Orders fetch error:', errorText)
-        throw new Error(errorText || 'Failed to fetch orders')
-      }
-      
-      const dtos = await res.json()
-      console.log('✅ Raw orders data from backend:', dtos)
+      const res = await fetch(`${BACKEND_URL}/api/orders`);
+      if (!res.ok) throw new Error('Erreur lors du chargement des commandes');
+      const ordersData: Order[] = await res.json();
+      setOrders(ordersData);
 
-      if (!Array.isArray(dtos)) {
-        throw new Error('Format de réponse invalide')
-      }
+      // Récupérer les informations des clients de manière plus efficace
+      const uniqueCustomerIds = Array.from(
+        new Set(ordersData.map((o) => o.customerId))
+      );
 
-      // CORRECTION: Votre backend retourne des objets avec "id" (pas "idOrder")
-      const enriched = await Promise.all(dtos.map(async (dto: any) => {
-        console.log('🔄 Processing order:', dto)
-        
-        // CORRECTION: Votre backend utilise "id" dans la réponse JSON
-        const display: DisplayOrder = {
-          id: dto.id, // ← Votre backend retourne "id": 2, "id": 3, etc.
-          customerId: dto.customerId,
-          productIds: Array.isArray(dto.productIds) ? dto.productIds : [],
-          orderDate: dto.orderDate,
-          status: dto.status || 'PENDING',
-          totalAmount: dto.totalAmount ?? 0,
-          createdAt: dto.orderDate,
-          customerName: dto.customerName || undefined,
-          customerEmail: dto.customerEmail || undefined,
-          customerPhone: dto.customerPhone || undefined,
-          items: []
-        }
+      const customersData: { [key: number]: Customer } = {};
 
-        // CORRECTION: Vérifier si les produits sont déjà dans la réponse
-        if (Array.isArray(dto.items) && dto.items.length > 0) {
-          display.items = dto.items.map((it: any) => ({
-            id: it.productId,
-            name: it.productName,
-            price: it.price,
-            quantity: it.quantity || 1
-          }))
-        } else if (Array.isArray(dto.productIds) && dto.productIds.length > 0) {
-          // Fallback: fetch product details
-          console.log(`🔄 Fetching products for order ${display.id}:`, dto.productIds)
-          const products = await Promise.all(dto.productIds.map(async (pid: number) => {
-            try {
-              // CORRECTION: Utiliser le bon endpoint pour les produits
-              const pRes = await fetch(`${BACKEND_URL}/api/products/${pid}`)
-              if (!pRes.ok) {
-                console.warn(`❌ Failed to fetch product ${pid}:`, pRes.status)
-                return null
-              }
-              const product = await pRes.json()
-              return product
-            } catch (err) {
-              console.error(`💥 Error fetching product ${pid}:`, err)
-              return null
-            }
-          }))
-
-          display.items = products.filter(Boolean).map((p: any) => ({
-            id: p.idProduct || p.id,
-            name: p.name,
-            price: p.price,
-            quantity: 1
-          }))
-        } else {
-          console.log(`ℹ️ No products found for order ${display.id}`)
-        }
-
-        // Fetch customer info if not present
-        if (!display.customerName && dto.customerId) {
-          try {
-            console.log(`🔄 Fetching customer ${dto.customerId} for order ${display.id}`)
-            const cRes = await fetch(`${BACKEND_URL}/api/customers/${dto.customerId}`)
-            if (cRes.ok) {
-              const c = await cRes.json()
-              display.customerName = `${c.firstName} ${c.lastName}`
-              display.customerEmail = c.email
-              display.customerPhone = c.phone
-            }
-          } catch (err) {
-            console.warn('Failed to fetch customer for order', dto.id, err)
+      // Utiliser Promise.all pour charger tous les clients en parallèle
+      const customerPromises = uniqueCustomerIds.map(async (customerId) => {
+        try {
+          const customerRes = await fetch(
+            `${BACKEND_URL}/api/customers/${customerId}`
+          );
+          if (customerRes.ok) {
+            const customer: Customer = await customerRes.json();
+            return { customerId, customer };
           }
+        } catch (error) {
+          console.error(`Error fetching customer ${customerId}:`, error);
         }
+        return null;
+      });
 
-        if (!display.customerName) {
-          display.customerName = `Client #${display.customerId || 'Inconnu'}`
+      const customerResults = await Promise.all(customerPromises);
+
+      customerResults.forEach((result) => {
+        if (result) {
+          customersData[result.customerId] = result.customer;
         }
+      });
 
-        return display
-      }))
-
-      setOrders(enriched)
-    } catch (error) {
-      console.error('💥 Error fetching orders:', error)
-      await Swal.fire({ 
-        icon: 'error', 
-        title: 'Erreur', 
-        text: 'Impossible de charger les commandes' 
-      })
+      setCustomers(customersData);
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Impossible de charger les commandes.',
+        icon: 'error',
+        timer: 3000,
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    fetchOrders()
-  }, [])
+  };
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
-    console.log('🔄 updateOrderStatus called:', { orderId, newStatus })
-    
-    if (!Object.keys(STATUS_DISPLAY).includes(newStatus)) {
-      await Swal.fire({ 
-        icon: 'error', 
-        title: 'Statut invalide', 
-        text: 'Le statut sélectionné n\'est pas valide.' 
-      })
-      return
-    }
-
     try {
-      const result = await Swal.fire({
-        title: 'Confirmer le changement',
-        text: `Voulez-vous vraiment changer le statut en "${STATUS_DISPLAY[newStatus].label}" ?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Oui, modifier',
-        cancelButtonText: 'Annuler'
-      })
-
-      if (!result.isConfirmed) return
-
-      setActionLoading(orderId)
-      
-      const url = `/api/orders/${orderId}/status?status=${newStatus}`
-      console.log('📤 Making PUT request to:', url)
-      
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+      const res = await fetch(
+        `${BACKEND_URL}/api/orders/${orderId}/status?status=${newStatus}`,
+        {
+          method: 'PUT',
         }
-      })
+      );
 
-      console.log('📥 Status update response status:', res.status)
-      
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('❌ Status update error:', errorText)
-        throw new Error(errorText || `HTTP ${res.status}: Failed to update order status`)
-      }
+      if (!res.ok) throw new Error('Erreur lors de la mise à jour du statut');
 
-      // CORRECTION: Votre backend peut retourner une réponse vide ou un objet
-      try {
-        const responseData = await res.json()
-        console.log('✅ Status update success:', responseData)
-      } catch {
-        console.log('✅ Status update success (no response body)')
-      }
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.idOrder === orderId ? { ...order, status: newStatus } : order
+        )
+      );
 
-      // Optimistic update
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
-      if (selectedOrder?.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null)
-      }
-
-      await Swal.fire({ 
-        icon: 'success', 
-        title: 'Statut mis à jour', 
-        text: `La commande a été mise à jour avec le statut : ${STATUS_DISPLAY[newStatus].label}` 
-      })
+      Swal.fire({
+        title: 'Succès!',
+        text: 'Statut de la commande mis à jour.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } catch (err) {
-      console.error('💥 Error updating status:', err)
-      await Swal.fire({ 
-        icon: 'error', 
-        title: "Erreur", 
-        text: err instanceof Error ? err.message : 'Erreur lors de la mise à jour du statut' 
-      })
-    } finally {
-      setActionLoading(null)
+      console.error(err);
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Erreur lors de la mise à jour du statut.',
+        icon: 'error',
+        timer: 3000,
+      });
     }
-  }
+  };
 
   const deleteOrder = async (orderId: number) => {
-    console.log('🗑️ deleteOrder called:', orderId)
-    
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr?',
+      text: 'Vous ne pourrez pas annuler cette action!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Oui, supprimer!',
+      cancelButtonText: 'Annuler',
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const result = await Swal.fire({
-        title: 'Supprimer cette commande ?',
-        text: "Cette action est irréversible.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Oui, supprimer',
-        cancelButtonText: 'Annuler'
-      })
-
-      if (!result.isConfirmed) return
-
-      setActionLoading(orderId)
-      
-      console.log('📤 Making DELETE request for order:', orderId)
-      
-      const res = await fetch(`/api/orders/${orderId}`, { 
+      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}`, {
         method: 'DELETE',
-        headers: {
-          'Accept': 'application/json'
-        }
-      })
+      });
 
-      console.log('📥 Delete response status:', res.status)
+      if (!res.ok) throw new Error('Erreur lors de la suppression');
 
-      // CORRECTION: Gérer différents codes de statut
-      if (res.status === 404) {
-        throw new Error('La commande n\'existe plus ou a déjà été supprimée')
-      }
-      
-      if (!res.ok) {
-        let errorMessage = 'Erreur lors de la suppression de la commande'
-        try {
-          const errorData = await res.json()
-          errorMessage = errorData.error || errorData.message || errorMessage
-        } catch (err) {
-          // Le backend peut retourner une réponse vide
-          console.log('Backend returned empty response for DELETE')
-        }
-        throw new Error(errorMessage)
-      }
-      
-      // Mise à jour optimiste
-      setOrders(prev => prev.filter(o => o.id !== orderId))
-      if (selectedOrder?.id === orderId) {
-        setSelectedOrder(null)
-      }
-      
-      await Swal.fire({ 
-        icon: 'success', 
-        title: 'Commande supprimée', 
-        text: 'La commande a été supprimée avec succès.' 
-      })
-      
+      setOrders((prev) => prev.filter((order) => order.idOrder !== orderId));
+
+      Swal.fire({
+        title: 'Supprimé!',
+        text: 'La commande a été supprimée avec succès.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } catch (err) {
-      console.error('💥 Error deleting order:', err)
-      await Swal.fire({ 
-        icon: 'error', 
-        title: 'Erreur', 
-        text: err instanceof Error ? err.message : 'Erreur lors de la suppression de la commande' 
-      })
-    } finally {
-      setActionLoading(null)
+      console.error(err);
+      Swal.fire({
+        title: 'Erreur!',
+        text: 'Erreur lors de la suppression de la commande.',
+        icon: 'error',
+        timer: 3000,
+      });
     }
-  }
+  };
 
-  const filtered = orders.filter(o =>
-    (filterStatus === 'ALL' || o.status === filterStatus) &&
-    (!query || (o.customerName || '').toLowerCase().includes(query.toLowerCase()))
-  )
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+      case 'CONFIRMED':
+        return 'bg-blue-100 text-blue-800 border border-blue-200';
+      case 'DELIVERED':
+        return 'bg-green-100 text-green-800 border border-green-200';
+      case 'CANCELLED':
+        return 'bg-red-100 text-red-800 border border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
+    }
+  };
 
-  const isActionLoading = (orderId: number) => actionLoading === orderId
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return 'En attente';
+      case 'CONFIRMED':
+        return 'Confirmée';
+      case 'DELIVERED':
+        return 'Livrée';
+      case 'CANCELLED':
+        return 'Annulée';
+      default:
+        return status;
+    }
+  };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-playfair text-2xl">Commandes</h2>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-1 rounded-lg border border-border bg-white"
-        >
-          <option value="ALL">Toutes les commandes</option>
-          {Object.entries(STATUS_DISPLAY).map(([value, { label }]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-      </div>
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-golden border-t-transparent rounded-full mx-auto mb-4" />
-          <div className="text-muted-foreground">Chargement des commandes...</div>
+  const calculateItemsTotal = (items: Order['items']) => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  if (loading) {
+    return (
+      <section className="mt-6 bg-card border border-border rounded-lg p-6 shadow-card">
+        <div className="flex items-center justify-between">
+          <h2 className="font-playfair text-xl font-bold text-foreground">
+            Commandes
+          </h2>
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          {orders.length === 0 ? 'Aucune commande trouvée' : 'Aucune commande ne correspond aux filtres'}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filtered.map(order => (
-            <div key={order.id} className="bg-white rounded-xl border border-border/40 overflow-hidden hover:border-border transition-colors">
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div>
-                    <h3 className="font-medium">{order.customerName}</h3>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleString('fr-FR') : 'Date inconnue'}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`px-3 py-1 rounded-full text-sm ${STATUS_DISPLAY[order.status]?.color || 'bg-gray-100 text-gray-700'}`}>
-                      {STATUS_DISPLAY[order.status]?.label || order.status}
-                    </div>
-                    <button 
-                      onClick={() => setSelectedOrder(order)} 
-                      className="text-golden hover:text-golden/80"
-                      disabled={isActionLoading(order.id)}
-                    >
-                      Détails
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div>{order.items.length} article{order.items.length > 1 ? 's' : ''}</div>
-                  <div className="font-medium">{Math.round(order.totalAmount)} Ar</div>
-                </div>
-              </div>
-
-              <div className="bg-background/50 px-4 py-2 flex items-center justify-end gap-2 text-sm">
-                <button 
-                  onClick={() => deleteOrder(order.id)} 
-                  className="text-rose-600 hover:text-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isActionLoading(order.id)}
-                >
-                  {isActionLoading(order.id) ? 'Suppression...' : 'Supprimer'}
-                </button>
-                {order.status === 'PENDING' && (
-                  <>
-                    <button 
-                      onClick={() => updateOrderStatus(order.id, 'CONFIRMED')} 
-                      className="text-emerald-600 hover:text-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isActionLoading(order.id)}
-                    >
-                      {isActionLoading(order.id) ? '...' : 'Confirmer'}
-                    </button>
-                    <button 
-                      onClick={() => updateOrderStatus(order.id, 'CANCELLED')} 
-                      className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isActionLoading(order.id)}
-                    >
-                      {isActionLoading(order.id) ? '...' : 'Annuler'}
-                    </button>
-                  </>
-                )}
-                {order.status === 'CONFIRMED' && (
-                  <button 
-                    onClick={() => updateOrderStatus(order.id, 'PREPARING')} 
-                    className="text-purple-600 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isActionLoading(order.id)}
-                  >
-                    {isActionLoading(order.id) ? '...' : 'Préparer'}
-                  </button>
-                )}
-                {order.status === 'PREPARING' && (
-                  <button 
-                    onClick={() => updateOrderStatus(order.id, 'READY')} 
-                    className="text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isActionLoading(order.id)}
-                  >
-                    {isActionLoading(order.id) ? '...' : 'Prête'}
-                  </button>
-                )}
-                {order.status === 'READY' && (
-                  <button 
-                    onClick={() => updateOrderStatus(order.id, 'DELIVERED')} 
-                    className="text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isActionLoading(order.id)}
-                  >
-                    {isActionLoading(order.id) ? '...' : 'Livrée'}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={() => setSelectedOrder(null)}>
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-playfair text-2xl">Détails de la commande #{selectedOrder.id}</h3>
-                <button onClick={() => setSelectedOrder(null)} className="text-muted-foreground hover:text-foreground">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">Client</div>
-                  <div className="font-medium">{selectedOrder.customerName}</div>
-                  {selectedOrder.customerEmail && (
-                    <div className="text-sm">{selectedOrder.customerEmail}</div>
-                  )}
-                  {selectedOrder.customerPhone && (
-                    <div className="text-sm">{selectedOrder.customerPhone}</div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Date de commande</div>
-                  <div className="font-medium">
-                    {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString('fr-FR') : 'Date inconnue'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Statut</div>
-                  <div className={`inline-block px-3 py-1 rounded-full text-sm ${STATUS_DISPLAY[selectedOrder.status]?.color || 'bg-gray-100 text-gray-700'}`}>
-                    {STATUS_DISPLAY[selectedOrder.status]?.label || selectedOrder.status}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <div className="font-medium mb-4">Articles commandés</div>
-              <div className="space-y-3">
-                {selectedOrder.items.length > 0 ? (
-                  selectedOrder.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-muted-foreground">{item.quantity} × {Math.round(item.price)} Ar</div>
-                      </div>
-                      <div className="font-medium">{Math.round(item.quantity * item.price)} Ar</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-muted-foreground py-4">
-                    Aucun article dans cette commande
-                  </div>
-                )}
-
-                <div className="border-t border-border pt-3 flex items-center justify-between text-lg">
-                  <div>Total</div>
-                  <div className="font-semibold">{Math.round(selectedOrder.totalAmount)} Ar</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-border bg-background/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-muted-foreground">Actions</div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => deleteOrder(selectedOrder.id)} 
-                    className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isActionLoading(selectedOrder.id)}
-                  >
-                    {isActionLoading(selectedOrder.id) ? 'Suppression...' : 'Supprimer'}
-                  </button>
-                  {selectedOrder.status === 'PENDING' && (
-                    <>
-                      <button 
-                        onClick={() => updateOrderStatus(selectedOrder.id, 'CONFIRMED')} 
-                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isActionLoading(selectedOrder.id)}
-                      >
-                        {isActionLoading(selectedOrder.id) ? '...' : 'Confirmer'}
-                      </button>
-                      <button 
-                        onClick={() => updateOrderStatus(selectedOrder.id, 'CANCELLED')} 
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isActionLoading(selectedOrder.id)}
-                      >
-                        {isActionLoading(selectedOrder.id) ? '...' : 'Annuler'}
-                      </button>
-                    </>
-                  )}
-                  {selectedOrder.status === 'CONFIRMED' && (
-                    <button 
-                      onClick={() => updateOrderStatus(selectedOrder.id, 'PREPARING')} 
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isActionLoading(selectedOrder.id)}
-                    >
-                      {isActionLoading(selectedOrder.id) ? '...' : 'Préparer'}
-                    </button>
-                  )}
-                  {selectedOrder.status === 'PREPARING' && (
-                    <button 
-                      onClick={() => updateOrderStatus(selectedOrder.id, 'READY')} 
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isActionLoading(selectedOrder.id)}
-                    >
-                      {isActionLoading(selectedOrder.id) ? '...' : 'Prête'}
-                    </button>
-                  )}
-                  {selectedOrder.status === 'READY' && (
-                    <button 
-                      onClick={() => updateOrderStatus(selectedOrder.id, 'DELIVERED')} 
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isActionLoading(selectedOrder.id)}
-                    >
-                      {isActionLoading(selectedOrder.id) ? '...' : 'Livrée'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Gérez les commandes clients ici.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <div className="animate-pulse text-muted-foreground">
+            Chargement des commandes...
           </div>
         </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-6 bg-card border border-border rounded-lg p-6 shadow-card">
+      <div className="flex items-center justify-between">
+        <h2 className="font-playfair text-xl font-bold text-foreground">
+          Commandes
+        </h2>
+        <button
+          onClick={fetchOrders}
+          className="px-4 py-2 rounded-md bg-foreground text-background font-medium shadow hover:opacity-90 transition"
+        >
+          Actualiser
+        </button>
+      </div>
+      <p className="text-sm text-muted-foreground mt-1">
+        Gérez les commandes clients ici.
+      </p>
+
+      {orders.length === 0 ? (
+        <div className="mt-6 text-center py-8">
+          <p className="text-muted-foreground">Aucune commande trouvée.</p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-6">
+          {orders.map((order) => {
+            const customer = customers[order.customerId];
+            const itemsTotal = calculateItemsTotal(order.items);
+
+            return (
+              <div
+                key={`order-${order.idOrder}`}
+                className="border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">
+                        Commande #{order.idOrder}
+                      </h3>
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}
+                      >
+                        {getStatusText(order.status)}
+                      </span>
+                    </div>
+
+                    {customer ? (
+                      <div className="space-y-1">
+                        <p className="text-sm">
+                          <span className="font-medium">Client:</span>{' '}
+                          {customer.firstName} {customer.lastName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {customer.email} • {customer.phone}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Chargement des informations client...
+                      </p>
+                    )}
+
+                    <p className="text-xs text-muted-foreground mt-2">
+                      📅 {formatDate(order.orderDate)}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-semibold text-xl text-golden">
+                      {order.totalAmount.toFixed(0)} Ar
+                    </p>
+                    {itemsTotal !== order.totalAmount && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Calcul: {itemsTotal.toFixed(0)} Ar
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium mb-3 text-foreground">
+                    Produits commandés:
+                  </h4>
+                  <div className="space-y-2">
+                    {order.items.map((item, index) => (
+                      <div
+                        key={`order-${order.idOrder}-item-${item.productId}-${index}`}
+                        className="flex justify-between items-center py-2 px-3 bg-muted/30 rounded"
+                      >
+                        <div>
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            x {item.quantity}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-medium">
+                            {(item.price * item.quantity).toFixed(0)} Ar
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            {item.price.toFixed(0)} Ar × {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-4 border-t border-border">
+                  <div className="flex gap-2">
+                    <select
+                      value={order.status}
+                      onChange={(e) =>
+                        updateOrderStatus(order.idOrder, e.target.value)
+                      }
+                      className="px-3 py-2 text-sm rounded-md border border-border bg-background focus:ring-2 focus:ring-golden/20 focus:border-golden"
+                    >
+                      <option value="PENDING">En attente</option>
+                      <option value="CONFIRMED">Confirmée</option>
+                      <option value="DELIVERED">Livrée</option>
+                      <option value="CANCELLED">Annulée</option>
+                    </select>
+
+                    <button
+                      onClick={() => {
+                        Swal.fire({
+                          title: `Détails Commande #${order.idOrder}`,
+                          html: `
+                                                        <div class="text-left space-y-2">
+                                                            <p><strong>ID Commande:</strong> #${order.idOrder}</p>
+                                                            <p><strong>Client:</strong> ${customer ? `${customer.firstName} ${customer.lastName}` : 'N/A'}</p>
+                                                            <p><strong>Email:</strong> ${customer ? customer.email : 'N/A'}</p>
+                                                            <p><strong>Téléphone:</strong> ${customer ? customer.phone : 'N/A'}</p>
+                                                            <p><strong>Date:</strong> ${formatDate(order.orderDate)}</p>
+                                                            <p><strong>Statut:</strong> ${getStatusText(order.status)}</p>
+                                                            <p><strong>Total:</strong> ${order.totalAmount.toFixed(0)} Ar</p>
+                                                            <div class="mt-3">
+                                                                <strong>Produits:</strong>
+                                                                ${order.items
+                                                                  .map(
+                                                                    (item) => `
+                                                                    <div class="ml-2">• ${item.name} x ${item.quantity} - ${(item.price * item.quantity).toFixed(0)} Ar</div>
+                                                                `
+                                                                  )
+                                                                  .join('')}
+                                                            </div>
+                                                        </div>
+                                                    `,
+                          icon: 'info',
+                          confirmButtonText: 'Fermer',
+                        });
+                      }}
+                      className="px-3 py-2 text-sm rounded-md border border-border hover:bg-input transition"
+                    >
+                      📋 Détails
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => deleteOrder(order.idOrder)}
+                    className="px-3 py-2 text-sm rounded-md bg-rose-600 text-white hover:opacity-90 transition"
+                  >
+                    🗑️ Supprimer
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
-    </div>
-  )
+    </section>
+  );
 }

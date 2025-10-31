@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Navbar,
   NavbarBrand,
@@ -10,20 +10,20 @@ import {
   NavbarMenu,
   NavbarMenuItem,
   NavbarMenuToggle,
-  Button
-} from "@heroui/react";
+  Button,
+} from '@heroui/react';
 
 export const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   const navigateTo = (target: string) => {
-    const isHashOnly = target.startsWith("#");
+    const isHashOnly = target.startsWith('#');
     const destination = isHashOnly ? `/${target}` : target;
     router.push(destination);
   };
 
-  const linkBase = "transition-colors duration-200 font-inter font-medium";
+  const linkBase = 'transition-colors duration-200 font-inter font-medium';
 
   return (
     <Navbar
@@ -34,18 +34,22 @@ export const Navigation = () => {
       onMenuOpenChange={setIsMenuOpen}
     >
       <NavbarContent className="md:hidden" justify="start">
-        <NavbarMenuToggle aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"} />
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+        />
       </NavbarContent>
 
       <NavbarBrand>
-        <h1 className="font-playfair text-2xl font-bold text-golden">Pain Boul</h1>
+        <h1 className="font-playfair text-2xl font-bold text-golden">
+          Pain Boul
+        </h1>
       </NavbarBrand>
 
       <NavbarContent className="hidden md:flex gap-8" justify="center">
         <NavbarItem>
           <button
             type="button"
-            onClick={() => navigateTo("#accueil")}
+            onClick={() => navigateTo('#accueil')}
             className={`text-foreground hover:text-golden ${linkBase}`}
           >
             Accueil
@@ -54,16 +58,16 @@ export const Navigation = () => {
         <NavbarItem>
           <button
             type="button"
-            onClick={() => navigateTo("#produits")}
+            onClick={() => navigateTo('#localisation')}
             className={`text-foreground hover:text-golden ${linkBase}`}
           >
-            Nos Produits
+            Point de vente
           </button>
         </NavbarItem>
         <NavbarItem>
           <button
             type="button"
-            onClick={() => navigateTo("#apropos")}
+            onClick={() => navigateTo('#apropos')}
             className={`text-foreground hover:text-golden ${linkBase}`}
           >
             À Propos
@@ -72,24 +76,19 @@ export const Navigation = () => {
         <NavbarItem>
           <button
             type="button"
-            onClick={() => navigateTo("#contact")}
+            onClick={() => navigateTo('#services')}
             className={`text-foreground hover:text-golden ${linkBase}`}
           >
-            Contact
+            Services
           </button>
         </NavbarItem>
       </NavbarContent>
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Button className="gradient-golden text-charcoal font-medium shadow-golden" radius="sm">
-            Commander
-          </Button>
-        </NavbarItem>
-        <NavbarItem>
           <button
             type="button"
-            onClick={() => navigateTo("/admin/login")}
+            onClick={() => navigateTo('/admin/login')}
             className={`text-foreground hover:text-golden ${linkBase}`}
           >
             Admin
@@ -102,26 +101,35 @@ export const Navigation = () => {
           <button
             type="button"
             className="block py-2 text-foreground hover:text-golden"
-            onClick={() => { setIsMenuOpen(false); navigateTo("#accueil"); }}
+            onClick={() => {
+              setIsMenuOpen(false);
+              navigateTo('#accueil');
+            }}
           >
             Accueil
           </button>
         </NavbarMenuItem>
-        
+
         <NavbarMenuItem>
           <button
             type="button"
             className="block py-2 text-foreground hover:text-golden"
-            onClick={() => { setIsMenuOpen(false); navigateTo("#produits"); }}
+            onClick={() => {
+              setIsMenuOpen(false);
+              navigateTo('#produits');
+            }}
           >
-            Nos Produits
+            Point de vente
           </button>
         </NavbarMenuItem>
         <NavbarMenuItem>
           <button
             type="button"
             className="block py-2 text-foreground hover:text-golden"
-            onClick={() => { setIsMenuOpen(false); navigateTo("#apropos"); }}
+            onClick={() => {
+              setIsMenuOpen(false);
+              navigateTo('#apropos');
+            }}
           >
             À Propos
           </button>
@@ -130,7 +138,10 @@ export const Navigation = () => {
           <button
             type="button"
             className="block py-2 text-foreground hover:text-golden"
-            onClick={() => { setIsMenuOpen(false); navigateTo("#contact"); }}
+            onClick={() => {
+              setIsMenuOpen(false);
+              navigateTo('#contact');
+            }}
           >
             Contact
           </button>
@@ -139,7 +150,10 @@ export const Navigation = () => {
           <button
             type="button"
             className="block py-2 text-foreground hover:text-golden"
-            onClick={() => { setIsMenuOpen(false); navigateTo("/admin/login"); }}
+            onClick={() => {
+              setIsMenuOpen(false);
+              navigateTo('/admin/login');
+            }}
           >
             Admin
           </button>
