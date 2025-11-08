@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { Navigation } from '@/components/navigation';
-import { Footer } from '@/components/footer';
-import React, { useEffect, useState } from 'react';
-import MenuCategory from '@/components/menu/MenuCategory';
-import { Category } from '@/types';
-import { BACKEND_URL } from '@/lib/config';
-import CartProvider, { useCart } from '@/components/CartProvider';
-import CartDrawer from '@/components/CartDrawer';
+import { Navigation } from "@/components/layout/navigation";
+import { Footer } from "@/components/layout/footer";
+import React, { useEffect, useState } from "react";
+import MenuCategory from "@/components/menu/MenuCategory";
+import { Category } from "@/lib/types";
+import { BACKEND_URL } from "@/lib/config/backend";
+import CartProvider, { useCart } from "@/components/cart/CartProvider";
+import CartDrawer from "@/components/cart/CartDrawer";
 
 export default function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -20,7 +20,7 @@ export default function MenuPage() {
     const fetchCategories = async () => {
       try {
         const res = await fetch(`${BACKEND_URL}/categories`);
-        if (!res.ok) throw new Error('Failed to fetch categories');
+        if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
         if (mounted) {
           setCategories(data);
@@ -43,7 +43,7 @@ export default function MenuPage() {
   const scrollToCategory = (categoryName: string) => {
     setActiveCategory(categoryName);
     const element = document.getElementById(`category-${categoryName}`);
-    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    element?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -54,12 +54,10 @@ export default function MenuPage() {
         {/* Header avec image de fond */}
         <header className="relative h-96 overflow-hidden">
           {/* Image de fond */}
-          <div
-            className="absolute inset-0 bg-[url('/image.png')] bg-cover bg-center"
-          />
+          <div className="absolute inset-0 bg-[url('/image.png')] bg-cover bg-center" />
           {/* Overlay sombre pour améliorer la lisibilité */}
           <div className="absolute inset-0 bg-black/40" />
-          
+
           {/* Gradient supplémentaire */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/10 to-background/5" />
 
@@ -74,8 +72,7 @@ export default function MenuPage() {
               </div>
 
               <p className="text-xl text-white/90 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
-                Découvrez l'excellence de notre artisanat boulanger. Chaque
-                produit est une œuvre préparée avec passion et le savoir-faire
+                Découvrez l'excellence de notre artisanat boulanger. Chaque produit est une œuvre préparée avec passion et le savoir-faire
                 traditionnel malgache.
               </p>
 
@@ -95,22 +92,10 @@ export default function MenuPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-golden"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
+                  <svg className="w-5 h-5 text-golden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
-                  <span className="font-inter font-medium text-foreground">
-                    Catégories
-                  </span>
+                  <span className="font-inter font-medium text-foreground">Catégories</span>
                 </div>
 
                 <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
@@ -120,8 +105,8 @@ export default function MenuPage() {
                       onClick={() => scrollToCategory(category.nameCategory)}
                       className={`px-4 py-2 rounded-full font-inter text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                         activeCategory === category.nameCategory
-                          ? 'gradient-golden text-charcoal shadow-golden'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                          ? "gradient-golden text-charcoal shadow-golden"
+                          : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                       }`}
                     >
                       {category.nameCategory}
@@ -142,9 +127,7 @@ export default function MenuPage() {
               <div className="text-3xl font-bold text-golden font-playfair mb-2 group-hover:scale-110 transition-transform duration-300">
                 50+
               </div>
-              <div className="text-muted-foreground font-inter">
-                Produits Artisanaux
-              </div>
+              <div className="text-muted-foreground font-inter">Produits Artisanaux</div>
             </div>
             <div className="text-center p-6 rounded-2xl bg-background border border-border hover:border-golden/30 transition-all duration-300 group">
               <div className="text-3xl font-bold text-golden font-playfair mb-2 group-hover:scale-110 transition-transform duration-300">
@@ -156,9 +139,7 @@ export default function MenuPage() {
               <div className="text-3xl font-bold text-golden font-playfair mb-2 group-hover:scale-110 transition-transform duration-300">
                 2018
               </div>
-              <div className="text-muted-foreground font-inter">
-                Année de Création
-              </div>
+              <div className="text-muted-foreground font-inter">Année de Création</div>
             </div>
           </div>
 
@@ -170,19 +151,12 @@ export default function MenuPage() {
                   <div className="w-8 h-8 bg-golden/10 rounded-full animate-ping" />
                 </div>
               </div>
-              <div className="mt-6 text-lg text-muted-foreground font-inter">
-                Chargement de notre sélection...
-              </div>
+              <div className="mt-6 text-lg text-muted-foreground font-inter">Chargement de notre sélection...</div>
             </div>
           ) : categories.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-24 h-24 mx-auto mb-6 bg-background border border-border rounded-full flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-muted-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -191,22 +165,15 @@ export default function MenuPage() {
                   />
                 </svg>
               </div>
-              <h3 className="font-playfair text-2xl text-foreground mb-3">
-                Menu en préparation
-              </h3>
+              <h3 className="font-playfair text-2xl text-foreground mb-3">Menu en préparation</h3>
               <p className="text-muted-foreground max-w-md mx-auto font-inter">
-                Notre menu est actuellement en cours de préparation. Revenez
-                bientôt pour découvrir nos délicieuses créations.
+                Notre menu est actuellement en cours de préparation. Revenez bientôt pour découvrir nos délicieuses créations.
               </p>
             </div>
           ) : (
             <div className="space-y-20">
               {categories.map((category, index) => (
-                <div
-                  key={category.idCategory}
-                  id={`category-${category.nameCategory}`}
-                  className="scroll-mt-32"
-                >
+                <div key={category.idCategory} id={`category-${category.nameCategory}`} className="scroll-mt-32">
                   <MenuCategory category={category} />
 
                   {/* Séparateur décoratif entre les catégories */}
@@ -224,12 +191,9 @@ export default function MenuPage() {
 
           {/* Call to Action */}
           <div className="text-center mt-20 p-12 rounded-3xl bg-background border border-border">
-            <h2 className="font-playfair text-3xl md:text-4xl text-foreground mb-6">
-              Prêt à savourer l'excellence ?
-            </h2>
+            <h2 className="font-playfair text-3xl md:text-4xl text-foreground mb-6">Prêt à savourer l'excellence ?</h2>
             <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto font-inter">
-              Commandez dès maintenant et laissez-vous emporter par la magie de
-              nos créations artisanales.
+              Commandez dès maintenant et laissez-vous emporter par la magie de nos créations artisanales.
             </p>
             <button
               onClick={() => setShowCart(true)}

@@ -2,9 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
-import { Category, Product } from '@/types';
-import { BACKEND_URL } from '@/lib/config';
+import { BACKEND_URL } from "@/lib/config/backend";
 
+interface Category {
+  idCategory: number;
+  nameCategory: string;
+}
+
+interface Product {
+  idProduct: number;
+  name: string;
+}
 export default function MenuCategory({ category }: { category: Category }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);

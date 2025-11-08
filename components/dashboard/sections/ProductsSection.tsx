@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import ProductFormModal from '../components/ProductFormModal';
-import { BACKEND_URL } from '@/lib/config';
-import Swal from 'sweetalert2';
+import { useEffect, useState } from "react";
+import ProductFormModal from "@/components/dashboard/ProductFormModal";
+import { BACKEND_URL } from "@/lib/config/backend";
+import Swal from "sweetalert2";
 
 interface Product {
   idProduct: number;
@@ -26,15 +26,15 @@ export default function ProductsSection({ query }: { query: string }) {
   const fetchProducts = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/products`);
-      if (!res.ok) throw new Error('Erreur lors du chargement des produits');
+      if (!res.ok) throw new Error("Erreur lors du chargement des produits");
       const data = await res.json();
       setProducts(data);
     } catch (err) {
       console.error(err);
       Swal.fire({
-        title: 'Erreur!',
-        text: 'Impossible de charger les produits.',
-        icon: 'error',
+        title: "Erreur!",
+        text: "Impossible de charger les produits.",
+        icon: "error",
         timer: 3000,
       });
     } finally {
@@ -44,52 +44,50 @@ export default function ProductsSection({ query }: { query: string }) {
 
   const handleDelete = async (idProduct: number) => {
     const result = await Swal.fire({
-      title: 'Êtes-vous sûr?',
-      text: 'Vous ne pourrez pas annuler cette action!',
-      icon: 'warning',
+      title: "Êtes-vous sûr?",
+      text: "Vous ne pourrez pas annuler cette action!",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Oui, supprimer!',
-      cancelButtonText: 'Annuler',
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Oui, supprimer!",
+      cancelButtonText: "Annuler",
     });
 
     if (!result.isConfirmed) return;
 
     try {
       const res = await fetch(`${BACKEND_URL}/products/${idProduct}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
-      if (!res.ok) throw new Error('Erreur lors de la suppression');
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
       setProducts(products.filter((p) => p.idProduct !== idProduct));
 
       Swal.fire({
-        title: 'Supprimé!',
-        text: 'Le produit a été supprimé avec succès.',
-        icon: 'success',
+        title: "Supprimé!",
+        text: "Le produit a été supprimé avec succès.",
+        icon: "success",
         timer: 2000,
         showConfirmButton: false,
       });
     } catch (err) {
       console.error(err);
       Swal.fire({
-        title: 'Erreur!',
-        text: 'Erreur lors de la suppression du produit.',
-        icon: 'error',
+        title: "Erreur!",
+        text: "Erreur lors de la suppression du produit.",
+        icon: "error",
         timer: 3000,
       });
     }
   };
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
 
   const getImageUrl = (imagePath: string) => {
-    if (!imagePath || imagePath.trim() === '') {
+    if (!imagePath || imagePath.trim() === "") {
       return null;
     }
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith("http")) return imagePath;
     return `${BACKEND_URL}${imagePath}`;
   };
 
@@ -99,9 +97,7 @@ export default function ProductsSection({ query }: { query: string }) {
   return (
     <section className="mt-6 bg-card border border-border rounded-lg p-6 shadow-card">
       <div className="flex items-center justify-between">
-        <h2 className="font-playfair text-xl font-bold text-foreground">
-          Produits
-        </h2>
+        <h2 className="font-playfair text-xl font-bold text-foreground">Produits</h2>
         <button
           onClick={() => {
             setEditingProduct(null);
@@ -112,9 +108,7 @@ export default function ProductsSection({ query }: { query: string }) {
           Nouveau produit
         </button>
       </div>
-      <p className="text-sm text-muted-foreground mt-1">
-        Gérez vos produits ici.
-      </p>
+      <p className="text-sm text-muted-foreground mt-1">Gérez vos produits ici.</p>
 
       {loading ? (
         <p className="mt-4 text-muted-foreground">Chargement...</p>
@@ -149,9 +143,7 @@ export default function ProductsSection({ query }: { query: string }) {
                           />
                         ) : (
                           <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
-                            <span className="text-xs text-muted-foreground">
-                              No img
-                            </span>
+                            <span className="text-xs text-muted-foreground">No img</span>
                           </div>
                         )}
                       </td>
@@ -180,10 +172,7 @@ export default function ProductsSection({ query }: { query: string }) {
                 })
               ) : (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="py-6 text-center text-muted-foreground"
-                  >
+                  <td colSpan={5} className="py-6 text-center text-muted-foreground">
                     Aucun produit trouvé
                   </td>
                 </tr>

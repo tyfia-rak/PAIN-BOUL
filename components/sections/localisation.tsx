@@ -32,7 +32,7 @@ const Localisation = () => {
               <div className="lg:w-5/12">
                 <div className="relative h-80 lg:h-full w-full">
                   <Image
-                    src="/lieu.webp"
+                    src="/images/lieu.webp"
                     alt="Intérieur de la boulangerie Pain-Boul' Triadana"
                     fill
                     className="object-cover"

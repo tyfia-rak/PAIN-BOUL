@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BACKEND_URL } from '@/lib/config';
+import { BACKEND_URL } from "@/lib/config/backend";
 import Swal from 'sweetalert2';
 
 interface Category {

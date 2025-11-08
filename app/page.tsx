@@ -1,19 +1,19 @@
-import { About } from "@/components/about";
-import { Accueil } from "@/components/accueil";
-import { Services } from "@/components/services";
-import { Footer } from "@/components/footer";
-import Localisation from "@/components/localisation";
-import { Navigation } from "@/components/navigation";
+import { About } from "@/components/sections/about";
+import { Accueil } from "@/components/sections/accueil";
+import { Services } from "@/components/sections/services";
+import { Footer } from "@/components/layout/footer";
+import Localisation from "@/components/sections/localisation";
+import { Navigation } from "@/components/layout/navigation";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <Accueil />
-      <Localisation/>
+      <Localisation />
       <About />
       <Services />
       <Footer />
     </div>
-  )
+  );
 }

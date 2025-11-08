@@ -11,7 +11,7 @@ export const Accueil = () => {
     >
       <div className="absolute inset-0">
         <Image
-          src="/ensemble.jpg"
+          src="/images/ensemble.jpg"
           alt="Boulangerie pain boule"
           fill
           className="object-cover"
